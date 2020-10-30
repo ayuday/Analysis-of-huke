@@ -1,6 +1,8 @@
 # 实现了虎课网视频批量下载
 gtihub   地址：https://github.com/Nchujx/Analysis-of-huke/releases/
+
      B站   地址：https://www.bilibili.com/video/BV1Ty4y1879F/
+     
 lanzous  地址：https://aohua.lanzoui.com/b00tyavza   密码:dzmi
 
 ## 2020.10.28
@@ -16,7 +18,9 @@ lanzous  地址：https://aohua.lanzoui.com/b00tyavza   密码:dzmi
 
 ## 2020.10.30 preview   不用再改user-agent 了
 重新研究算法，只用输入网址和Cookie 就可下载
+
 不用再改user-agent 了
+
 虎课又付费购买的课程下载不了……
 
 
