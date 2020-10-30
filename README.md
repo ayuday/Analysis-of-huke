@@ -17,6 +17,7 @@ lanzous  地址：https://aohua.lanzoui.com/b00tyavza   密码:dzmi
 ## 2020.10.30 preview   不用再改user-agent 了
 重新研究算法，只用输入网址和Cookie 就可下载
 不用再改user-agent 了
+虎课又付费购买的课程下载不了……
 
 
 
