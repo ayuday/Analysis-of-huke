@@ -22,6 +22,7 @@ url: `https://asyn.huke88.com/video/video-play`
 
 headers 里面有 
 
+```json
 Host:`asyn.huke88.com`
 
 Origen:`https://huke88.com`
@@ -43,6 +44,7 @@ confirm: 0
 async: false
 
 _csrf-frontend: MTBFZHZ6RHgDch9cPCssHV4CEgAYFS4dbgk2EQ5MPTNUXiAxMR4HPw==
+```
 
 预览：
 
@@ -149,58 +151,68 @@ msg: "可以播放,因为你是全站VIP啊!"
 
 # 代码实现
 
-这是我2020.10.28第二版代码，基本实现了所有功能，只做解析，生成的 bat 文件可以调用 https://github.com/nilaoda/N_m3u8DL-CLI/releases v2.7.5 版本，实现下载
+这是我2020.10.30第二版代码，基本实现了所有功能，只做解析，生成的 bat 文件可以调用 https://github.com/nilaoda/N_m3u8DL-CLI/releases v2.7.5 版本，实现下载
 
 ```python
 import requests
-from lxml import etree
 import re
-import os
+from lxml import etree
 from datetime import datetime
+import os
 from time import sleep
-headers_mobile = {
-    'User-Agent':'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
-   }
 
-# 实现单个视频下载
-def single_run(url2,Cookie,_csrf_frontend):
-    url1 = 'https://m.huke88.com/video/video-url'
-    id = re.findall(r'\b\d+\b', url2)[0]
-    headers1 = {
-        'Cookie':Cookie,
+User_Agent_pc = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4050.0 Safari/537.36 Edg/82.0.423.0'
+User_Agent_mobile = 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+
+def s_run(surl,Cookie,_csrf_frontend):
+    headers_get_title = {
+        'User-Agent': User_Agent_mobile
+    }
+    response = requests.get(url=surl, headers=headers_get_title)
+    html = etree.HTML(response.text)
+    title = html.xpath("//h1[@class='con']/text()")[0]
+
+
+    headers = {
+        'User-Agent':'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+        'Cookie': Cookie,
         'Host': 'm.huke88.com',
-        'Referer': url2,
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+        'Referer': surl,
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'Origin': 'https://m.huke88.com',
         'X-Requested-With': 'XMLHttpRequest',
         'Sec-Fetch-Dest': 'empty',
+        'Accept-Encoding':'gzip, deflate, br',
         'Sec-Fetch-Mode': 'cors',
+        'Accept-Language':'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+        'Content-Length':'116',
+        'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+
         'Sec-Fetch-Site': 'same-origin'
     }
+    id = re.findall(r'\b\d+\b', surl)[0]
     data = {
         'id': id,
         '_csrf-frontend': _csrf_frontend
     }
-
-
-    response = requests.post(url=url1, headers=headers1, data=data)
+    response = requests.post(url='https://m.huke88.com/video/video-url',headers=headers,data=data)
     videoUrl = response.json().get('data').get('videoUrl')
 
-
-    response = requests.get(url=url2, headers=headers_mobile)
-    html = etree.HTML(response.text)
-    title = html.xpath("//h1[@class='con']/text()")[0]
-
     infos = {
-        'videoUrl':videoUrl,
-        'title':title
+        'videoUrl': videoUrl,
+        'title': title
     }
     print(infos)
-    write(infos)
-    sleep(1)
+    write(name=name,infos=infos)
+    sleep(2)
 
-def Parse_page(url,Cookie):
+
+def write(name,infos):
+    with open(name,'a',encoding='utf-8') as f:
+        f.write("TITLE" + " " + '"'+infos.get('title') +'"'+ '\n')
+        f.write('"'+ r"N_m3u8DL-CLI_v2.7.5.exe" +'"'+ ' ' + '"' + infos.get('videoUrl') + '"' + ' ' + '--workDir' + ' ' + dir + ' ' + '--saveName' + ' ' + '"'+infos.get('title') +'"'+ ' '+ '--enableDelAfterDone ' '\n')
+
+def Parse_page1(url,Cookie,_csrf_frontend):
     response = requests.get(url=url)
     html = etree.HTML(response.text)
     #First_dir = html.xpath("//h2/text()")[0]
@@ -210,23 +222,10 @@ def Parse_page(url,Cookie):
         for href in hrefs:
             if href[0:7] != "https:/":
                 href = "https://huke88.com" + href
-            single_run(href,Cookie,_csrf_frontend)
-
-# 只做解析，生成 bat 文件，用 nilaoda 的下载器下载即可
-def write(infos):
-    try:
-        with open(name,'a',encoding='utf-8') as f:
-            f.write("TITLE" + " " + '"' + infos.get('title') +'"'+ '\n')
-            f.write('"' + "N_m3u8DL-CLI_v2.7.5.exe" + '"' + ' ' + '"' + infos.get(
-        'videoUrl') + '"' + ' ' + '--workDir' + ' ' + dir + ' ' + '--saveName' + ' ' + infos.get('title') + '\n')
-    except:
-        pass
+            s_run(href,Cookie,_csrf_frontend)
 
 def Parse_page2(url,Cookie,_csrf_frontend):
-    headers = {
-        'Cookie':Cookie
-    }
-    response = requests.get(url=url,headers=headers)
+    response = requests.get(url=url)
     html = etree.HTML(response.text)
     srcs = html.xpath("//div[@class='dd-list']/a/@href")
     if srcs == []:
@@ -236,53 +235,96 @@ def Parse_page2(url,Cookie,_csrf_frontend):
             if href[0:5] == 'https':
                 srcs.append(href)
     for src in srcs:
-        single_run(url2=src, Cookie=Cookie, _csrf_frontend=_csrf_frontend)
+        s_run(surl=src, Cookie=Cookie, _csrf_frontend=_csrf_frontend)
 
-if __name__ == '__main__':
-    print('请输入网址，例如：https://huke88.com/route/ae.html 或 https://huke88.com/course/3238.html')
-    url = input('请输入网址：')
-    url = url.replace('m.huke88.com','huke88.com')
-     #Cookie 需要改 UA 再获取
-    Cookie = input('请输入Cookie:')
-    # video-play 里面可以看到
-    _csrf_frontend = input('请输入_csrf-frontend：')
-    a = url.split('/')
+
+def get_frontend(url,Cookie):
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'Cookie': Cookie,
+        'Host': 'm.huke88.com',
+        'Referer': 'https://huke88.com/',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+    }
+
+    response = requests.get(url=url, headers=headers)
+    html = etree.HTML(response.text)
+    token = html.xpath("//meta[@name='csrf-token']/@content")
+    head = response.headers
+
+    x = head.get('Set-Cookie')
+    x = x.split(';')
+    x = x[5]
+    x = x.replace(' httponly, _csrf-frontend=', '').replace(
+        '%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22', '').replace('%22%3B%7D', '')
+    frontend = x[0:65]
+    frontend2 = x[-32:]
+    Cookie = Cookie + ';' + '_csrf-frontend={}%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22{}%22%3B%7D'.format(frontend,frontend2)
+    return (Cookie,token)
+
+def run(url,Cookie):
+
+    url = url.replace('https://huke88.com/', 'https://m.huke88.com/')
+    if '_csrf-frontend=' not in Cookie:
+        (Cookie, _csrf_frontend) = get_frontend(url=url, Cookie=Cookie)
+        print(_csrf_frontend)
+    (Ncookie, _csrf_frontend) = get_frontend(url=url, Cookie=Cookie)
+    url = url.replace('m.huke88.com', 'huke88.com')
+
+    global name
     name = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
     name = str(name) + '.bat'
-    with open(name,'w',encoding='utf-8') as f:
-        f.write('@echo off' + '\n' + '::Created by N_m3u8DL-CLI-SimpleG' + '\n' + r'chcp 65001 >nul' + '\n')
+    with open(name, 'w', encoding='utf-8') as f:
+        f.write("@echo off" + '\n' + "::Created by N_m3u8DL-CLI-SimpleG" + '\n' + r"chcp 65001 >nul" + '\n')
+        global dir
         dir = r'./Downloads'
         if os.path.exists(dir) == False:
             os.makedirs('Downloads')
-
+    a = url.split('/')
     if a[-2] == 'route':
-        Parse_page(url, Cookie)
-
+        Parse_page1(url=url,Cookie=Cookie,_csrf_frontend=_csrf_frontend)
     else:
         print('检测到多个视频，下载全部请输入1，只下载一个请输入2')
         choice = input()
         if choice == '2':
-            single_run(url, Cookie=Cookie, _csrf_frontend=_csrf_frontend)
+            s_run(url, Cookie=Cookie, _csrf_frontend=_csrf_frontend)
 
         elif choice == '1':
-            Parse_page2(url, Cookie,_csrf_frontend=_csrf_frontend)
-
+            Parse_page2(url=url,Cookie=Cookie,_csrf_frontend=_csrf_frontend)
         else:
             print('输入错误！')
+    s_run(surl=url, Cookie=Cookie, _csrf_frontend=_csrf_frontend)
+    raw = input('按回车键退出……')
 
-
+if __name__ == '__main__':
+    url = input('请输入url:')
+    Cookie = input('请输入Cookie:')
+    run(url=url,Cookie=Cookie)
 ```
 
-更新链接：https://aohua.lanzoui.com/b00tyavza 密码:dzmi ，或在 github 下载 https://github.com/Nchujx/Analysis-of-huke
+将上面这段保存为 huke.py 然后用下面这段代码可以直接调用
+
+```
+import huke
+url = input('请输入网址：')
+Cookie = input('请输入Cookie:')
+huke.run(url=url,Cookie=Cookie)
+```
 
 # 使用方法
 
-1. 打开软件，输入网址
+1. 输入网址
+2. 输入Cookie
+3. 默认爬取一个视频沉睡2秒，爬取时可点开生成的 bat 文件下载，实现边爬取边下载。
 
-2. 浏览器 F12 切换 UA 到手机模式，刷新
+更新链接：https://aohua.lanzoui.com/b00tyavza 密码:dzmi
 
-3. 播放视频，点开 video-url ,获取里面的 Cookie 及 **_csrf-frontend**
+github 下载 https://github.com/Nchujx/Analysis-of-huke
 
-4. 等待解析完成，解析完毕后双击生成的 bat 文件即可
-
+B站视频链接：https://www.bilibili.com/video/BV1Ty4y1879F
 
