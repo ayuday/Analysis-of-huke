@@ -25,6 +25,9 @@ lanzous  地址：https://aohua.lanzoui.com/b00tyavza   密码:dzmi
 
 鉴于有人被封号的情况，改为每爬取一个视频沉睡2秒
 
+## 2020.11.02
+新增可以下载职业类的课程
+
 
 
 ！注意：
