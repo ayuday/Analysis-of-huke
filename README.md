@@ -28,6 +28,9 @@ lanzous  地址：https://aohua.lanzoui.com/b00tyavza   密码:dzmi
 ## 2020.11.02
 新增可以下载职业类的课程
 
+## 2020.11.11
+新增可以下载直播回放
+
 
 
 ！注意：
